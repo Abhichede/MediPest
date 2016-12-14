@@ -1,90 +1,43 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static java.awt.print.Printable.NO_SUCH_PAGE;
+import static java.awt.print.Printable.PAGE_EXISTS;
+
 /**
  * Created by abmiro on 9/12/16.
  */
-public class HomePage extends JFrame {
+public class HomePage extends JFrame implements Printable{
 
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
+    JDesktopPane desktopPane;
+    JInternalFrame internalFrame;
     /**
      *
      * @param frameName
      */
     public HomePage(String frameName){
         super(frameName);
-        setLayout(null);
+        //setLayout(null);
         setDefaultTheme();
         setSize(screenSize);
         JMenuBar mainMenuBar = mainMenuBar();
+        desktopPane = new JDesktopPane();
         setJMenuBar(mainMenuBar);
 
 
-        /**
-         * Customer Details Panel
-         */
-        JPanel customerDetailsPanel = new JPanel();
-        customerDetailsPanel.setBounds(5, 5, ((int)screenSize.getWidth())-75, 100);
-        //JLabel lblCurrentTime = getCurrentTime();
-        JLabel lblCustomerName = new JLabel("Customer Name :");
-        JTextField txtCustomerName = new JTextField(15);
-
-        JLabel lblCustomerAddress = new JLabel("Address :");
-        JTextField txtCustomerAddress = new JTextField(15);
-
-        JLabel lblCustomerMobile = new JLabel("Mobile No :");
-        JTextField txtCustomerMobile = new JTextField(15);
-
-        //customerDetailsPanel.add(lblCurrentTime);
-        customerDetailsPanel.add(lblCustomerName);
-        customerDetailsPanel.add(txtCustomerName);
-        customerDetailsPanel.add(lblCustomerAddress);
-        customerDetailsPanel.add(txtCustomerAddress);
-        customerDetailsPanel.add(lblCustomerMobile);
-        customerDetailsPanel.add(txtCustomerMobile);
-        customerDetailsPanel.setBorder(BorderFactory.createTitledBorder("Customer Details"));
-        /******************************end Customer Details************************************************************/
-
-        /**
-         * The table for Bill
-         */
-        JPanel billPanel = new JPanel(null);
-        String[] columnNames = {"First Name",
-                "Last Name",
-                "Sport",
-                "# of Years",
-                "Vegetarian"};
-        Object[][] data = {
-                {"Kathy", "Smith",
-                        "Snowboarding", new Integer(5), new Boolean(false)},
-                {"John", "Doe",
-                        "Rowing", new Integer(3), new Boolean(true)},
-                {"Sue", "Black",
-                        "Knitting", new Integer(2), new Boolean(false)},
-                {"Jane", "White",
-                        "Speed reading", new Integer(20), new Boolean(true)},
-                {"Joe", "Brown",
-                        "Pool", new Integer(10), new Boolean(false)}
-        };
-        JTable table = new JTable(data, columnNames);
-        JScrollPane scrollPane = new JScrollPane(table);
-        table.setFillsViewportHeight(true);
-        scrollPane.setBounds(100, 100, (billPanel.getWidth())-75, 290);
-
-        billPanel.add(scrollPane);
-        billPanel.setBorder(BorderFactory.createTitledBorder("Bill"));
-        billPanel.setBounds(5, 105, ((int)screenSize.getWidth())-75, 300);
-        /*************************** end ****************************************************/
-
-
-        this.add(customerDetailsPanel);
-        this.add(billPanel);
+        //this.add(desktopPane);
+        setContentPane(desktopPane);
 
     }
 
@@ -95,8 +48,6 @@ public class HomePage extends JFrame {
     public static void main(String a[]){
 
         JFrame homePage = new HomePage("MediPest");
-        //homePage.setSize();
-        System.out.println("Width :" +homePage.getWidth() +" Height :"+ homePage.getHeight() );
         homePage.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         homePage.setVisible(true);
     }
@@ -116,10 +67,11 @@ public class HomePage extends JFrame {
         JMenuItem item1 = new JMenuItem("1-----------------");
         JMenuItem item2 = new JMenuItem("1=s=d=d=d=d=d=d==d");
         JMenuItem item3 = new JMenuItem("1");
-        JMenuItem item4 = new JMenuItem("1");
+        JMenuItem item4 = new JMenuItem("Stock Management");
         JMenuItem item5 = new JMenuItem("1d-d-d---d-d-d-d-d");
         JMenuItem item6 = new JMenuItem("1");
         JMenuItem item7 = new JMenuItem("1s=s=s=s=s");
+        JMenuItem showReport = new JMenuItem("Show Report");
 
         fileMenu.add(item1);
         fileMenu.add(item2);
@@ -129,7 +81,35 @@ public class HomePage extends JFrame {
         stockMenu.add(item5);
         stockMenu.add(item6);
 
+        item4.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(internalFrame != null){
+                    internalFrame.dispose();
+                }
+                internalFrame = new StockManagement(desktopPane.getWidth(), desktopPane.getHeight());
+                internalFrame.setSize(desktopPane.getWidth(), desktopPane.getHeight());
+                internalFrame.setVisible(true);
+                desktopPane.add(internalFrame);
+            }
+        });
+
         accountingMenu.add(item7);
+        item7.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(internalFrame != null){
+                    internalFrame.dispose();
+                }
+                internalFrame = new MakeBill(desktopPane.getSize());
+                internalFrame.setSize(desktopPane.getWidth(), desktopPane.getHeight());
+                internalFrame.setVisible(true);
+                desktopPane.add(internalFrame);
+            }
+        });
+
+        stockReport.add(showReport);
+
 
         jMainMenuBar.add(Box.createRigidArea(new Dimension(15, 30)));
         jMainMenuBar.add(fileMenu);
@@ -139,6 +119,23 @@ public class HomePage extends JFrame {
         jMainMenuBar.add(accountingMenu);
         jMainMenuBar.add(Box.createRigidArea(new Dimension(15, 30)));
         jMainMenuBar.add(stockReport);
+
+        showReport.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(internalFrame != null){
+                        internalFrame.dispose();
+                    }
+                    internalFrame = new StockReport("Stock Report");
+                    internalFrame.setSize(((int) screenSize.getWidth()) - 70, ((int) screenSize.getHeight()) - 65);
+                    System.out.println("Stock Clicked");
+                    desktopPane.add(internalFrame);
+                }catch (Exception exception){
+                    exception.printStackTrace();
+                }
+            }
+        });
 
         return jMainMenuBar;
     }
@@ -182,4 +179,25 @@ public class HomePage extends JFrame {
 
         return timeLabel;
     }
+
+    public int print(Graphics g, PageFormat pf, int page) throws
+            PrinterException {
+
+        if (page > 0) { /* We have only one page, and 'page' is zero-based */
+            return NO_SUCH_PAGE;
+        }
+
+        /* User (0,0) is typically outside the imageable area, so we must
+         * translate by the X and Y values in the PageFormat to avoid clipping
+         */
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.translate(pf.getImageableX(), pf.getImageableY());
+
+        /* Now we perform our rendering */
+        g.drawString("Hello world!", 100, 100);
+
+        /* tell the caller that this page is part of the printed document */
+        return PAGE_EXISTS;
+    }
+
 }
