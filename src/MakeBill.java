@@ -1,3 +1,5 @@
+import jdk.nashorn.internal.scripts.JO;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -51,7 +53,7 @@ public class MakeBill extends JInternalFrame {
          */
         JPanel billPanel = new JPanel(new GridLayout(0, 1));
         DefaultTableModel billTableModel = new DefaultTableModel(0, 0);
-        String[] columnNames = {"Trade Name", "Pkg. Size", "Technical Name", "Comapny Name",
+        String[] columnNames = {"Trade Name", "Technical Name", "Comapny Name", "Pkg. Size",
                 "Batch No.", "Exp. Date", "VAT %", "Qty", "Rate", "Ass. Value", "VAT Amt", "Total Amount"};
 
         JTable table = new JTable();
@@ -71,60 +73,93 @@ public class MakeBill extends JInternalFrame {
          * Product Selection
          */
 
-        JPanel addProductPanel = new JPanel(null);
+        JPanel addProductPanel = new JPanel(new GridLayout(5, 2, 20, 10));
 
         addProductPanel.setBounds(0, 275, (((int) screenSize.getWidth()) / 2)-10, ((int) screenSize.getHeight()) - 305);
         addProductPanel.setBorder(BorderFactory.createTitledBorder("Select Product"));
 
-        JLabel lblProductName = new JLabel("Product Name :");
-        lblProductName.setBounds(60, 30, 100, 30);
+        JLabel lblProductName = new JLabel("TRADE NAME :");
         JTextField txtProductName = new JTextField(15);
-        txtProductName.setBounds(180, 30, 200, 30);
-        JLabel lblSerialNumber = new JLabel("Serial Number :");
-        lblSerialNumber.setBounds(60, 80, 100, 30);
-        JTextField txtSerialNumber = new JTextField(15);
-        txtSerialNumber.setBounds(180, 80, 200, 30);
+        JLabel lblTechnicalName = new JLabel("TECHNICAL NAME :");
+        JTextField txtTechnicalName = new JTextField(15);
+        JLabel lblVat = new JLabel("VAT %");
+        JTextField txtVat = new JTextField(10);
         JLabel lblQuantity = new JLabel("Quantity / Size :");
-        lblQuantity.setBounds(60, 130, 100, 30);
         JTextField txtQuantity = new JTextField(15);
-        txtQuantity.setBounds(180, 130, 200, 30);
+
+        JLabel lblTotalQuantity = new JLabel("TOTAL QUANTITY : ");
+        JTextField txtTotalQuantity = new JTextField(6);
+        txtTotalQuantity.setEditable(false);
+        txtTotalQuantity.setText("0");
+        JLabel lblTotalAssValue = new JLabel("TOTAL ASS. VALUE : ");
+        JTextField txtTotalAssValue = new JTextField(6);
+        txtTotalAssValue.setEditable(false);
+        txtTotalAssValue.setText("0");
+        JLabel lblTotalVAT = new JLabel("TOTAL VAT : ");
+        JTextField txtTotalVAT = new JTextField(6);
+        txtTotalVAT.setEditable(false);
+        txtTotalVAT.setText("0");
+        JLabel lblTotalAmount = new JLabel("TOTAL AMOUNT : ");
+        JTextField txtTotalAmount = new JTextField(6);
+        txtTotalAmount.setEditable(false);
+        txtTotalAmount.setText("0");
 
         JButton btnAdd = new JButton("Add");
         btnAdd.setBounds(100, 190, 100, 30);
-        btnAdd.addActionListener(new ActionListener() {
+        btnAdd.addActionListener(new ActionListener()  {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    String itemSerialNumber = txtSerialNumber.getText();
+                    String technicalName = txtTechnicalName.getText();
                     String tradeName = txtProductName.getText();
+                    Float vatInPer = Float.parseFloat(txtVat.getText());
                     int quantity = Integer.parseInt(txtQuantity.getText());
+                    int flag = 0;
                     Class.forName("com.mysql.jdbc.Driver");
                     //System.out.println("Creating connection...");
                     Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/stock_management","root","root");
 
-                    PreparedStatement queryData = connection.prepareStatement("select * from stock_management");
+                    PreparedStatement queryData = connection.prepareStatement("SELECT * FROM medipest_stock WHERE TRADE_NAME = ? AND TECHNICAL_NAME= ?");
+                    queryData.setString(1, tradeName);
+                    queryData.setString(2, technicalName);
                     ResultSet records = queryData.executeQuery();
                     String data[] = new String[12];
 
-
-                    while(records.next()){
-                        if(itemSerialNumber.equals(records.getString(2)) ) {
-                            data[0] = records.getString(1);
-                            data[1] = records.getString(3);
-                            data[2] = records.getString(4);
-                            data[3] = records.getString(5);
-                            data[4] = records.getString(6);
-                            data[5] = records.getString(7);
-                            data[6] = String.valueOf(records.getFloat(8));
+                    if(records != null) {
+                        while (records.next()) {
+                            data[0] = records.getString("TRADE_NAME");
+                            data[1] = records.getString("TECHNICAL_NAME");
+                            data[2] = records.getString("COMPANY_NAME");
+                            data[3] = records.getString("PACKAGE_SIZE");
+                            data[4] = records.getString("BATCH_NO");
+                            data[5] = records.getString("EXPIRY_DATE");
+                            data[6] = String.valueOf(vatInPer);
+                            Float assValue = quantity * Float.parseFloat(records.getString("RATE"));
+                            Float totalVAT = (vatInPer / 100) * assValue;
                             data[7] = String.valueOf(quantity);
-                            data[8] = String.valueOf(records.getFloat(10));
-                            data[9] = String.valueOf(records.getFloat(11));
-                            data[10] = String.valueOf(records.getFloat(12));
-                            data[11] = String.valueOf(records.getFloat(13));
+                            data[8] = records.getString("RATE");
+                            data[9] = String.valueOf(assValue);
+                            data[10] = String.valueOf(totalVAT);
+                            data[11] = String.valueOf(assValue + totalVAT);
+
+                            txtTotalQuantity.setText(String.valueOf(Float.parseFloat(txtTotalQuantity.getText()) + quantity));
+                            txtTotalAssValue.setText(String.valueOf(Float.parseFloat(txtTotalAssValue.getText()) + assValue));
+                            txtTotalVAT.setText(String.valueOf(Float.parseFloat(txtTotalVAT.getText()) + totalVAT));
+                            txtTotalAmount.setText(String.valueOf(Float.parseFloat(txtTotalAmount.getText()) + (assValue + totalVAT)));
 
                             billTableModel.addRow(data);
-
+                            flag = 1;
                         }
+                    }else{
+                        flag = 0;
+                        JOptionPane.showInternalMessageDialog(getContentPane(), "Sorry, The TRADE not Found", "Not Found", JOptionPane.ERROR_MESSAGE);
+                    }
+
+                    if(flag == 1){
+                        txtTechnicalName.setText("");
+                        txtProductName.setText("");
+                        txtVat.setText("");
+                        txtQuantity.setText("");
                     }
                 }catch (Exception exception){exception.printStackTrace();}
             }
@@ -132,8 +167,10 @@ public class MakeBill extends JInternalFrame {
 
         addProductPanel.add(lblProductName);
         addProductPanel.add(txtProductName);
-        addProductPanel.add(lblSerialNumber);
-        addProductPanel.add(txtSerialNumber);
+        addProductPanel.add(lblTechnicalName);
+        addProductPanel.add(txtTechnicalName);
+        addProductPanel.add(lblVat);
+        addProductPanel.add(txtVat);
         addProductPanel.add(lblQuantity);
         addProductPanel.add(txtQuantity);
         addProductPanel.add(btnAdd);
@@ -142,7 +179,7 @@ public class MakeBill extends JInternalFrame {
         /**
          * Final Bill Options
          */
-        JPanel finalBillPanel = new JPanel();
+        JPanel finalBillPanel = new JPanel(new GridLayout(5, 2));
         finalBillPanel.setBounds((((int) screenSize.getWidth()) / 2) - 15, 275, (((int) screenSize.getWidth()) / 2), ((int) screenSize.getHeight()) - 305);
         finalBillPanel.setBorder(BorderFactory.createTitledBorder("Print Final Bill"));
 
@@ -163,6 +200,14 @@ public class MakeBill extends JInternalFrame {
             }
         });
 
+        finalBillPanel.add(lblTotalQuantity);
+        finalBillPanel.add(txtTotalQuantity);
+        finalBillPanel.add(lblTotalAssValue);
+        finalBillPanel.add(txtTotalAssValue);
+        finalBillPanel.add(lblTotalVAT);
+        finalBillPanel.add(txtTotalVAT);
+        finalBillPanel.add(lblTotalAmount);
+        finalBillPanel.add(txtTotalAmount);
         finalBillPanel.add(btnPrint);
         /********************************** end *********************************************************/
 

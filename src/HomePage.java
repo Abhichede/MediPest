@@ -32,8 +32,22 @@ public class HomePage extends JFrame implements Printable{
         setDefaultTheme();
         setSize(screenSize);
         JMenuBar mainMenuBar = mainMenuBar();
-        desktopPane = new JDesktopPane();
+        desktopPane = new JDesktopPane(){
+            ImageIcon icon = new ImageIcon("images/ubuntu.jpg");
+            Image image = icon.getImage();
+
+            Image newimage = image.getScaledInstance((int) screenSize.getWidth(), (int) screenSize.getHeight(), Image.SCALE_SMOOTH);
+
+            @Override
+            protected void paintComponent(Graphics g)
+            {
+                super.paintComponent(g);
+                g.drawImage(newimage, 0, 0, this);
+            }
+        };
         setJMenuBar(mainMenuBar);
+
+
 
 
         //this.add(desktopPane);
@@ -67,21 +81,21 @@ public class HomePage extends JFrame implements Printable{
         JMenuItem item1 = new JMenuItem("1-----------------");
         JMenuItem item2 = new JMenuItem("1=s=d=d=d=d=d=d==d");
         JMenuItem item3 = new JMenuItem("1");
-        JMenuItem item4 = new JMenuItem("Stock Management");
-        JMenuItem item5 = new JMenuItem("1d-d-d---d-d-d-d-d");
+        JMenuItem itemStockManagement = new JMenuItem("Stock Management");
+        JMenuItem itemShowStock = new JMenuItem("Show Stock");
         JMenuItem item6 = new JMenuItem("1");
-        JMenuItem item7 = new JMenuItem("1s=s=s=s=s");
+        JMenuItem itemMakeBill = new JMenuItem("Make a Bill");
         JMenuItem showReport = new JMenuItem("Show Report");
 
         fileMenu.add(item1);
         fileMenu.add(item2);
         fileMenu.add(item3);
 
-        stockMenu.add(item4);
-        stockMenu.add(item5);
+        stockMenu.add(itemStockManagement);
+        stockMenu.add(itemShowStock);
         stockMenu.add(item6);
 
-        item4.addActionListener(new ActionListener() {
+        itemStockManagement.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(internalFrame != null){
@@ -94,8 +108,21 @@ public class HomePage extends JFrame implements Printable{
             }
         });
 
-        accountingMenu.add(item7);
-        item7.addActionListener(new ActionListener() {
+        itemShowStock.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(internalFrame != null){
+                    internalFrame.dispose();
+                }
+                internalFrame = new ShowStock(desktopPane.getWidth(), desktopPane.getHeight());
+                internalFrame.setSize(desktopPane.getWidth(), desktopPane.getHeight());
+                internalFrame.setVisible(true);
+                desktopPane.add(internalFrame);
+            }
+        });
+
+        accountingMenu.add(itemMakeBill);
+        itemMakeBill.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(internalFrame != null){
